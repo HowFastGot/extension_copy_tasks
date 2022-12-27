@@ -1,0 +1,38 @@
+{
+	"manifest_version": 3,
+	"name": "Copy a task content",
+	"description": "Я втомився самостійно копіювати відмінені таски. Тепер за мене це робить JavaScript",
+	"version": "1.0.1",
+	"permissions": ["activeTab", "scripting", "tabs"],
+	"icons": {
+		"16": "images/16.png",
+		"32": "images/32.png",
+		"48": "images/48.png",
+		"128": "images/128.png"
+	},
+	"action": {
+		"default_icon": {
+			"16": "images/16.png",
+			"32": "images/32.png",
+			"48": "images/48.png",
+			"128": "images/128.png"
+		}
+	},
+	"content_scripts": [
+		{
+			"js": ["scripts/content.js"],
+			"matches": ["https://trackensure.com/app-admin/support-dashboard/*"]
+		}
+	],
+	"background": {
+		"service_worker": "background.js"
+	},
+	"commands": {
+		"_execute_action": {
+			"suggested_key": {
+				"default": "Ctrl+U",
+				"mac": "Command+U"
+			}
+		}
+	}
+}
