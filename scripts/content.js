@@ -17,6 +17,7 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
      } else {
           try {
                document.querySelectorAll(".copyTriggerButton").forEach(item => item.remove());
+               document.querySelectorAll(".timeTriggerButton").forEach(item => item.remove());
 
                document.querySelector(".row.row-cols-xl-2 .btn-primary").removeEventListener("click", startAsyasynchronouslyScript);
 
@@ -35,79 +36,68 @@ const reasonOfCanceletionArr = [
      "Невозможно помочь из-за ДОТ выгрузки лог бука водителя",
      "Водитель отказался от перевода его лог бука в ручные события",
      "Водитель передумал получать помощь со своим лог буком и сказалал что перезвонит позже",
-     "Помощь требовалась другому водителю, суппорт по ошибке выбрал не того"
+     "Помощь требовалась другому водителю, суппорт по ошибке выбрал не того",
+     "У водителя был технический вопрос, оказали консультацию при помощи mobile assistance",
+     "Флит компании обратился только за консультацией"
 ]
 
 function setCopyIcon() {
      const tasksRows = document.querySelectorAll("div.datatable-row-center.datatable-row-group.ng-star-inserted");
-
      let copyTrigger;
 
      tasksRows.forEach((item) => {
 
-          const extraType = item.querySelectorAll("div.datatable-body-cell-label > div.ng-star-inserted > div.ng-tns-c5-1 > span.ng-tns-c5-1")[1]?.textContent ?? "";
-          const provideELD = item.querySelectorAll("div.datatable-row-center .datatable-body-cell > div.datatable-body-cell-label > span.ng-tns-c5-1 > span.ng-tns-c5-1");
+          const rowHorizontalSections = item.querySelectorAll(".datatable-body-cell");
+          const taskType = rowHorizontalSections[9].querySelector("div.datatable-body-cell-label").textContent;
+          const extraType = rowHorizontalSections[9].querySelector("div.datatable-body-cell-label > div > div:nth-child(9) > span")?.textContent;
 
-          provideELD?.forEach(item => {
 
-               switch (item.textContent.toLowerCase()) {
-                    case 'trackensure eld':
-                         item.style.fontStyle = "italic";
-                         break;
-                    case "alfa eld":
-                         item.style.color = "red";
-                         item.style.fontSize = "16px";
-                         item.style.fontWight = "600";
-                         break;
-                    case "vista eld":
-                         item.style.color = "blue";
-                         item.style.fontSize = "16px";
-                         item.style.fontWight = "600";
-                         break;
-                    case "swift eld":
-                         item.style.color = "aqua";
-                         item.style.fontSize = "16px";
-                         item.style.fontWight = "600";
-                         break;
-                    default:
-                         item.style.color = "rgb(255,0,255)";
-                         item.style.fontSize = "19px";
-               }
-          });
+          const provideELD = rowHorizontalSections[11].querySelector(".datatable-body-cell-label > .ng-tns-c6-1 > .ng-tns-c6-1")
 
-          switch (extraType.toLocaleLowerCase().slice(1, extraType.length - 1)) {
-               case "one time help":
-                    return;
+          switch (provideELD.textContent.toLowerCase()) {
+               case 'trackensure eld':
+                    provideELD.style.fontStyle = "italic";
+                    break;
+               case "alfa eld":
+                    provideELD.style.color = "red";
+                    provideELD.style.fontSize = "16px";
+                    provideELD.style.fontWight = "600";
+                    break;
+               case "vista eld":
+                    provideELD.style.color = "blue";
+                    provideELD.style.fontSize = "16px";
+                    provideELD.style.fontWight = "600";
+                    break;
+               case "swift eld":
+                    provideELD.style.color = "aqua";
+                    provideELD.style.fontSize = "16px";
+                    provideELD.style.fontWight = "600";
+                    break;
+               default:
+                    provideELD.style.color = "rgb(255,0,255)";
+                    provideELD.style.fontSize = "19px";
           }
 
-          item.querySelectorAll(".datatable-body-cell-label").forEach(item => { //селектор типа таска
-               item.querySelectorAll("span.ng-tns-c5-1").forEach(item => { //селектор текста таска
+          if (taskType === "LOG EDITING") {
 
-                    if (item.textContent < 1) return;
+               copyTrigger = document.createElement("div");
+               copyTrigger.classList.add("copyTriggerButton");
 
-                    if (item.textContent === "LOG EDITING") {
-                         const parent = item.closest("div.datatable-row-center.datatable-row-group.ng-star-inserted");
-
-                         copyTrigger = document.createElement("div");
-                         copyTrigger.classList.add("copyTriggerButton");
-
-                         copyTrigger.innerHTML = `✏️`;
+               copyTrigger.innerHTML = `✏️`;
 
 
-                         copyTrigger.style.cssText = `
-                              cursor: pointer;
-                              font-size: 18px;
-                              text-align: center;
-                         `;
+               copyTrigger.style.cssText = `
+                         cursor: pointer;
+                         font-size: 18px;
+                         text-align: center;
+                    `;
 
-                         if (parent.querySelector(".copyTriggerButton")) {
-                              return;
-                         }
+               if (item.querySelector(".copyTriggerButton")) {
+                    return;
+               }
 
-                         parent.prepend(copyTrigger);
-                    }
-               });
-          });
+               item.prepend(copyTrigger);
+          }
      });
 
      try {
@@ -117,39 +107,6 @@ function setCopyIcon() {
      } catch (error) {
           console.log(error);
      }
-}
-function pastTextToclipboard(reasonIndex, e) {
-     const parentElement = e.target.parentElement;
-     const collectionForTimeTask = [...parentElement.querySelectorAll("div.datatable-body-cell-label > div.ng-tns-c5-1")];
-
-     const taskData = {
-          id: parentElement.querySelector("span.ng-star-inserted").textContent,
-          colleage: collectionForTimeTask.at(-2).textContent,
-          companyName: parentElement.querySelector("div.datatable-body-cell-label > div.ng-tns-c5-1 > span.ng-tns-c5-1").textContent,
-          driverName: parentElement.querySelectorAll("div.datatable-body-cell-label > div.ng-tns-c5-1 > span.ng-star-inserted")[1].textContent,
-          taskTime: collectionForTimeTask.at(-3).textContent,
-          taskType: parentElement.querySelectorAll("div.datatable-body-cell-label > div.ng-star-inserted > div.ng-tns-c5-1 > span.ng-tns-c5-1")[0].textContent,
-          taskSubType: parentElement.querySelectorAll("div.datatable-body-cell-label > div.ng-star-inserted > div.ng-tns-c5-1 > span.ng-tns-c5-1")[1]?.textContent ?? ""
-     };
-
-     const { id, colleage, companyName, driverName, taskTime, taskType, taskSubType } = taskData;
-
-     navigator.clipboard.writeText(`  ) Суппорт ${colleage} просит отменить таск
-  ${companyName.trim()} / ${driverName}
-  Task ID: ${id}  
-  Request type:  ${taskType} ${taskSubType}
-  Time spent:  ${taskTime.split(":").splice(1).join(":")}
-  Причина: ${reasonOfCanceletionArr[reasonIndex]}
-     `.trim())
-          .then(() => {
-               document.querySelector(".modal-resons").style.opacity = 0;
-          })
-          .catch(() => alert("Error"))
-          .finally(() => {
-               setTimeout(() => {
-                    document.querySelector(".modal-resons").remove();
-               }, 1000);
-          });
 }
 function handleTriggerClick(e) {
      e.stopPropagation();
@@ -196,8 +153,46 @@ function handleTriggerClick(e) {
 
      document.body.append(modal);
 }
+
+function pastTextToclipboard(reasonIndex, e) {
+
+     const collectionForTimeTask = e.target.parentElement.querySelectorAll(".datatable-body-cell");
+
+     const taskData = {
+          id: collectionForTimeTask[0].textContent,
+          colleage: collectionForTimeTask[16].textContent.trim(),
+          companyName: collectionForTimeTask[6].textContent.trim(),
+          driverName: collectionForTimeTask[8].textContent.trim(),
+          taskTime: collectionForTimeTask[15].textContent.slice(3),
+          taskType: collectionForTimeTask[9].textContent.trim(),
+          taskSubType: collectionForTimeTask[9].querySelector("div.datatable-body-cell-label > div > div:nth-child(9) > span")?.textContent
+     };
+
+     const { id, colleage, companyName, driverName, taskTime, taskType, taskSubType } = taskData;
+
+     navigator.clipboard.writeText(`  ) Суппорт ${colleage} просит отменить таск
+  ${companyName.trim()} / ${driverName}
+  Task ID: ${id}  
+  Request type:  ${taskType} ${taskSubType}
+  Time spent:  ${taskTime}
+  Причина: ${reasonOfCanceletionArr[reasonIndex]}
+     `.trim())
+          .then(() => {
+               document.querySelector(".modal-resons").style.opacity = 0;
+          })
+          .catch(() => alert("Error"))
+          .finally(() => {
+               setTimeout(() => {
+                    document.querySelector(".modal-resons").remove();
+               }, 1000);
+          });
+}
+
 function startAsyasynchronouslyScript() {
-     setTimeout(() => setCopyIcon(), 1000);
+     setTimeout(() => {
+          setCopyIcon();
+          mountTimeCopyTrigger();
+     }, 1000);
 }
 function handleClickOnTarget(e) {
      if (e.target.closest("span.ng-star-inserted")) {
@@ -226,39 +221,49 @@ function handleClickOnTarget(e) {
 
 function mountTimeCopyTrigger() {
      const tasksRows = document.querySelectorAll("div.datatable-row-center.datatable-row-group.ng-star-inserted");
+     const timeTriggerButtons = document.querySelectorAll(".timeTriggerButton");
+
+     if (timeTriggerButtons.length > 0) {
+          timeTriggerButtons.forEach(item => item.remove());
+     }
 
      let timeTrigger;
 
-     tasksRows.forEach((item) => {
+     tasksRows.forEach((taskRow) => {
 
-          item.querySelectorAll(".datatable-body-cell-label").forEach((item, i) => { //селектор типа таска
+          const typeOfTask = taskRow.querySelectorAll(".datatable-body-cell")[9].querySelector("div.datatable-body-cell-label");
+          const statusOfTask = taskRow.querySelector(".badge").textContent.toLocaleLowerCase().trim();
 
-               if (i !== 9) return;
+          if (typeOfTask && typeOfTask.textContent.toLocaleLowerCase() === "time is running out" && statusOfTask !== "completed") {
 
-               const typeOfTask = item.querySelector("span").textContent.toLocaleLowerCase();
+               typeOfTask.style.cssText = `
+                    white-space: nowrap;
+               `;
 
-               if (typeOfTask && typeOfTask === "time is running out") {
+               timeTrigger = document.createElement("div");
+               timeTrigger.classList.add("timeTriggerButton");
 
-                    timeTrigger = document.createElement("div");
-                    timeTrigger.classList.add("timeTriggerButton");
-
-                    timeTrigger.innerHTML = `📧`;
+               timeTrigger.innerHTML = `📧`;
 
 
-                    timeTrigger.style.cssText = `
+               timeTrigger.style.cssText = `
                               display: inline-block;
+                              position: absolute;
+                              right: 580px; 
+                              top: 10px;
                               cursor: pointer;
-                              font-size: 28px;
+                              font-size: 25px;
                               text-align: center;
+                              transition: 1s all ease-in;
                          `;
 
-                    if (item.querySelector(".timeTriggerButton")) {
-                         return;
-                    };
+               if (taskRow.querySelector(".timeTriggerButton")) {
+                    return;
+               };
 
-                    item.append(timeTrigger);
-               }
-          });
+               taskRow.append(timeTrigger);
+          }
+
      });
 
      try {
@@ -272,17 +277,19 @@ function mountTimeCopyTrigger() {
 
 function handleClickOnEnvelop(e) {
      e.stopPropagation();
-     const parentElement = e.target.closest("div.datatable-row-center.datatable-row-group.ng-star-inserted");
-     const target = e.target;
 
-     target.style.cssText = `
+     const target = e.target;
+     const collectionForTimeTask = target.closest("div.datatable-row-center.datatable-row-group.ng-star-inserted").querySelectorAll(".datatable-body-cell");
+
+     const prevCssText = target.style.cssText;
+
+     target.style.cssText = prevCssText + `
           font-size: 18px;
-          transition: 1s all ease-in;
      `;
 
      const taskData = {
-          driverName: parentElement.querySelectorAll("div.datatable-body-cell-label > div.ng-tns-c5-1 > span.ng-star-inserted")[1].textContent,
-          taskType: parentElement.querySelectorAll("div.datatable-body-cell-label > div.ng-star-inserted > div.ng-tns-c5-1 > span.ng-tns-c5-1")[0].textContent,
+          driverName: collectionForTimeTask[8].textContent.trim(),
+          taskType: collectionForTimeTask[9].textContent.trim(),
      };
 
      const { driverName } = taskData;
@@ -293,13 +300,11 @@ function handleClickOnEnvelop(e) {
 
           const condition = e.code === "Digit1";
 
-          let textForEmail = condition ? "you" : `your driver ${driverName.replace(/\(\w+\)/ig, "")}`
+          let textForEmail = condition ? "you " : `your driver ${driverName.replace(/\(\w+\)/ig, "")}`
 
-          navigator.clipboard.writeText(`TrackEnsure: The time of the subscription is running out
+          navigator.clipboard.writeText(`Dear customer,                             TrackEnsure: The time of the subscription is running out  
 
-Dear customer,
-
-We want to inform you that the time of monthly subscription for ${textForEmail} is running out. 
+We want to inform you that the time of monthly subscription for ${textForEmail}is running out. 
 
 Be advised that ${condition ? "you" : "your driver"} can still contact our department regarding the technical issues that might happen. Overusing the subscription implies an extra bill for every extra minute. When your payment cycle renews, you will receive an extra bill for the previous month to the email, mentioned in your profile.
 
@@ -313,7 +318,7 @@ Looking forward to hearing  from you,
 Sales Agent Evgeny
                `.trim())
                .then(() => {
-                    target.style.fontSize = "25px";
+                    target.style.cssText = prevCssText;
                })
                .catch(() => alert("Error"))
                .finally(() => {
