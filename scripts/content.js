@@ -10,8 +10,10 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
 
                document.querySelector(".row.row-cols-xl-2 .btn-primary").addEventListener("click", startAsyasynchronouslyScript);
 
-               document.querySelector(".datatable-body").addEventListener("scroll", setCopyIcon);
-               document.querySelector(".datatable-body").addEventListener("scroll", mountTimeCopyTrigger);
+               [setCopyIcon, mountTimeCopyTrigger, bindEventListenerToScroll].forEach(func => {
+                    document.querySelector(".datatable-body").addEventListener("scroll", func);
+               })
+
 
           }, 1000);
      } else {
@@ -21,8 +23,10 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
 
                document.querySelector(".row.row-cols-xl-2 .btn-primary").removeEventListener("click", startAsyasynchronouslyScript);
 
-               document.querySelector(".datatable-body").removeEventListener("scroll", setCopyIcon);
-               document.querySelector(".datatable-body").removeEventListener("scroll", mountTimeCopyTrigger);
+               [setCopyIcon, mountTimeCopyTrigger, bindEventListenerToScroll].forEach(func => {
+                    document.querySelector(".datatable-body").removeEventListener("scroll", func);
+               })
+
 
                document.removeEventListener("click", handleClickOnTarget);
           } catch (error) {
@@ -42,8 +46,11 @@ const reasonOfCanceletionArr = [
 ]
 
 function setCopyIcon() {
+
      const tasksRows = document.querySelectorAll("div.datatable-row-center.datatable-row-group.ng-star-inserted");
      let copyTrigger;
+
+     if (tasksRows.length === 1 && document.querySelector(".copyTriggerButton")) return;
 
      tasksRows.forEach((item) => {
 
@@ -78,7 +85,7 @@ function setCopyIcon() {
                     provideELD.style.fontSize = "19px";
           }
 
-          if (taskType === "LOG EDITING") {
+          if (taskType.includes("LOG EDITING") && !taskType.includes("One Time")) {
 
                copyTrigger = document.createElement("div");
                copyTrigger.classList.add("copyTriggerButton");
@@ -87,6 +94,9 @@ function setCopyIcon() {
 
 
                copyTrigger.style.cssText = `
+                         position: absolute;
+                         right: 580px; 
+                         top: 10px;
                          cursor: pointer;
                          font-size: 18px;
                          text-align: center;
@@ -96,7 +106,7 @@ function setCopyIcon() {
                     return;
                }
 
-               item.prepend(copyTrigger);
+               item.append(copyTrigger);
           }
      });
 
@@ -165,7 +175,7 @@ function pastTextToclipboard(reasonIndex, e) {
           driverName: collectionForTimeTask[8].textContent.trim(),
           taskTime: collectionForTimeTask[15].textContent.slice(3),
           taskType: collectionForTimeTask[9].textContent.trim(),
-          taskSubType: collectionForTimeTask[9].querySelector("div.datatable-body-cell-label > div > div:nth-child(9) > span")?.textContent
+          taskSubType: collectionForTimeTask[9].querySelector("div.datatable-body-cell-label > div > div:nth-child(9) > span")?.textContent ?? ""
      };
 
      const { id, colleage, companyName, driverName, taskTime, taskType, taskSubType } = taskData;
@@ -189,10 +199,26 @@ function pastTextToclipboard(reasonIndex, e) {
 }
 
 function startAsyasynchronouslyScript() {
-     setTimeout(() => {
+     document.querySelectorAll(".copyTriggerButton").forEach(item => item.remove());
+     document.querySelectorAll(".timeTriggerButton").forEach(item => item.remove());
+
+     const timeIdCopyMark = setTimeout(() => {
+          setCopyIcon();
+
+          clearTimeout(timeIdCopyMark);
+     }, 500);
+
+     const timeId = setTimeout(() => {
           setCopyIcon();
           mountTimeCopyTrigger();
-     }, 1000);
+          createButton({
+               actionButtonSelector: ".actions-button-width",
+               completeButtonSelector: ".fa.fa-check.mr-2",
+               modalBottomSelector: ".modal-content .modal-footer .no-gutters"
+          })
+
+          clearTimeout(timeId);
+     }, 3000);
 }
 function handleClickOnTarget(e) {
      if (e.target.closest("span.ng-star-inserted")) {
@@ -329,4 +355,120 @@ Sales Agent Evgeny
      }
 
      document.addEventListener("keypress", handleKeyPress);
+}
+
+//=========Create the Save buttom=======================================================================================
+
+function bindEventListenerToScroll() {
+     createButton({
+          actionButtonSelector: ".actions-button-width",
+          completeButtonSelector: ".fa.fa-check.mr-2",
+          modalBottomSelector: ".modal-content .modal-footer .no-gutters"
+     })
+}
+function createButton(
+     {
+          actionButtonSelector,
+          completeButtonSelector,
+          modalBottomSelector
+     }) {
+
+     if (!document.querySelector("#showMyTasks input").checked) return;
+
+     const tasksRows = document.querySelectorAll("div.datatable-row-center.datatable-row-group.ng-star-inserted");
+
+     const handleClickOnPaidBtn = (e, typeOfTask) => {
+          e.preventDefault();
+          e.stopPropagation();
+          const target = e.currentTarget;
+
+          const textarea = document.querySelector("textarea");
+
+          if (typeOfTask.includes('TIME IS RUNNING OUT')) {
+               textarea.value = "Sent letter to the customer";
+               const yesBtn = document.querySelector(".col-auto.right button");
+               yesBtn.disabled = false;
+               yesBtn.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+          } else {
+               textarea.value = "The help has been paid";
+               const arrowDown = document.querySelector(".col-auto.right .dropdown button");
+               arrowDown.disabled = false;
+               arrowDown.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+
+               setTimeout(() => {
+                    document.querySelector(".right .dropdown-item").dispatchEvent(new MouseEvent("click", { bubbles: true }));
+               }, 0)
+          }
+
+
+
+          target.removeEventListener("click", handleClickOnPaidBtn);
+     }
+     const handleClickOnCompleteBtn = (e, typeOfTask) => {
+          e.preventDefault();
+          e.stopPropagation();
+          const target = e.target;
+
+          setTimeout(() => {
+               const modalBottom = document.querySelector(modalBottomSelector);
+
+               if (modalBottom) {
+                    const sentBtn = document.createElement("button");
+                    sentBtn.textContent = "Done";
+                    sentBtn.classList.add("btn");
+                    sentBtn.classList.add("btn-primary");
+                    sentBtn.style.color = "yellow";
+                    document.querySelector(".col-auto.left").append(sentBtn);
+
+                    sentBtn.addEventListener("click", (e) => handleClickOnPaidBtn(e, typeOfTask));
+
+
+               }
+          }, 500)
+          target.removeEventListener("click", handleClickOnCompleteBtn);
+     }
+
+     const handleClickOnActionBtn = (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          const target = e.target;
+
+          target.removeAttribute("event-added");
+
+          const parentRowTask = target.closest("div.datatable-row-center");
+          const typeOfTask = parentRowTask.querySelectorAll(".datatable-body-cell")[9].querySelector("div.datatable-body-cell-label");
+          const timeId = setTimeout(() => {
+               const completeButtonsIcon = document.querySelectorAll(completeButtonSelector);
+
+               completeButtonsIcon.forEach(btnIcons => {
+                    const btn = btnIcons.closest("button");
+
+                    if (!btn.getAttribute("event-added")) {
+                         btn.style.fontStyle = "italic";
+                         btn.style.color = "green";
+                         btn.addEventListener("click", (e) => handleClickOnCompleteBtn(e, typeOfTask.textContent));
+                         btn.setAttribute("event-added", true)
+                    }
+
+               })
+
+               clearTimeout(timeId);
+          }, 100)
+
+          target.removeEventListener("click", handleClickOnActionBtn);
+     }
+
+
+     tasksRows.forEach(taskRow => {
+          const badgeStatus = taskRow.querySelectorAll(".datatable-body-cell")[10].querySelector("div.datatable-body-cell-label").querySelector(".badge").textContent.trim().toLocaleLowerCase()
+
+          if (badgeStatus === 'completed') return;
+
+          const actionButton = taskRow.querySelector(actionButtonSelector);
+
+          if (!actionButton.getAttribute("event-added")) {
+               actionButton.addEventListener("click", handleClickOnActionBtn);
+               actionButton.setAttribute("event-added", true)
+          }
+     })
 }
